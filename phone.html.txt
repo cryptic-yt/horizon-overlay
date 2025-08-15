@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OBS Phone Overlay</title>
+<style>
+  body {
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: transparent;
+    font-family: Arial, sans-serif;
+  }
+
+  .phone {
+    width: 360px;
+    height: 720px;
+    border-radius: 40px;
+    border: 10px solid #333;
+    background: #111;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0,0,0,0.7);
+  }
+
+  /* Lock Screen */
+  .lock-screen {
+    width: 100%;
+    height: 100%;
+    background: url('https://images.unsplash.com/photo-1523978591478-c753949ff840?fit=crop&w=360&h=720') center/cover no-repeat;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    color: #fff;
+    position: absolute;
+    top: 0;
+    z-index: 2;
+    padding: 40px 0;
+    box-sizing: border-box;
+    transition: top 0.4s ease;
+  }
+
+  .time {
+    font-size: 48px;
+    margin-top: 20px;
+    text-shadow: 0 0 5px rgba(0,0,0,0.7);
+  }
+
+  .swipe-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    position: relative;
+    margin-bottom: 30px;
+  }
+
+  .swipe-btn {
+    width: 180px;
+    height: 50px;
+    background: rgba(255,255,255,0.9);
+    border-radius: 25px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #000;
+    cursor: grab;
+    user-select: none;
+    font-weight: bold;
+    position: relative;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  }
+
+  /* Home Screen PNG */
+  .home-screen {
+    width: 100%;
+    height: 100%;
+    background: url('https://via.placeholder.com/360x720.png?text=Home+Screen') center/cover no-repeat;
+    position: absolute;
+    top: 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s;
+  }
+
+  /* Power Button */
+  .power-btn {
+    position: absolute;
+    right: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 60px;
+    background: #333;
+    border-radius: 20px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="lock-screen" id="lockScreen">
+    <div class="time" id="timeDisplay"></div>
+    <div class="swipe-container">
+      <div class="swipe-btn" id="swipeBtn">Swipe to Unlock</div>
+    </div>
+  </div>
+
+  <div class="home-screen" id="homeScreen"></div>
+
+  <div class="power-btn" id="powerBtn"></div>
+</div>
+
+<script>
+const lockScreen = document.getElementById('lockScreen');
+const homeScreen = document.getElementById('homeScreen');
+const swipeBtn = document.getElementById('swipeBtn');
+const powerBtn = document.getElementById('powerBtn');
+const timeDisplay = document.getElementById('timeDisplay');
+
+// Update time every second
+function updateTime() {
+  const now = new Date();
+  let hours = now.getHours();
+  const minutes = now.getMinutes().toString().padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12 || 12;
+  timeDisplay.textContent = `${hours}:${minutes} ${ampm}`;
+}
+setInterval(updateTime, 1000);
+updateTime();
+
+// Swipe unlock with drag
+let isDragging = false;
+let startX;
+swipeBtn.addEventListener('mousedown', (e) => {
+  isDragging = true;
+  startX = e.clientX;
+});
+
+document.addEventListener('mousemove', (e) => {
+  if (!isDragging) return;
+  let diff = e.clientX - startX;
+  diff = Math.max(0, Math.min(180, diff));
+  swipeBtn.style.transform = `translateX(${diff}px)`;
+});
+
+document.addEventListener('mouseup', () => {
+  if (!isDragging) return;
+  isDragging = false;
+  const left = parseInt(swipeBtn.style.transform.replace('translateX(', '')) || 0;
+  if (left > 120) {
+    // Unlock
+    lockScreen.style.top = '-100%';
+    homeScreen.style.opacity = '1';
+    homeScreen.style.pointerEvents = 'auto';
+  }
+  swipeBtn.style.transform = 'translateX(0)';
+});
+
+// Power button
+powerBtn.addEventListener('click', () => {
+  lockScreen.style.top = '0';
+  homeScreen.style.opacity = '0';
+  homeScreen.style.pointerEvents = 'none';
+});
+</script>
+
+</body>
+</html>
